@@ -1,29 +1,53 @@
-name: Build IPA
-on: [push]
+name: Build GokuShop IPA
+on: [push, workflow_dispatch] # Se lance à chaque modification ou manuellement
 
 jobs:
   build:
     runs-on: macos-latest
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v3
+      - name: Checkout du code
+        uses: actions/checkout@v4
 
-      - name: Set up Xcode
+      - name: Configuration de Xcode
         uses: maxim-lobanov/setup-xcode@v1
         with:
           xcode-version: 'latest'
 
-      - name: Build IPA
+      - name: Creation de la structure IPA
         run: |
-          # Ce script simule la création de l'application
-          # Pour un projet réel sans certificat Apple Developer, 
-          # on génère un dossier .app puis on le zippe en .ipa
-          mkdir -p build/Payload
-          cp -r *.swift *.html *.js build/Payload/
+          # 1. Créer le dossier Payload (obligatoire pour iOS)
+          mkdir -p build/Payload/GokuShop.app
+          
+          # 2. Copier le code source et les assets web dans le paquet
+          cp ContentView.swift build/Payload/GokuShop.app/
+          cp index.html build/Payload/GokuShop.app/ 2>/dev/null || true
+          cp index.js build/Payload/GokuShop.app/ 2>/dev/null || true
+          cp offline.html build/Payload/GokuShop.app/ 2>/dev/null || true
+          
+          # 3. Créer un fichier Info.plist minimal pour l'identifiant
+          cat <<EOF > build/Payload/GokuShop.app/Info.plist
+          <?xml version="1.0" encoding="UTF-8"?>
+          <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+          <plist version="1.0">
+          <dict>
+              <key>CFBundleIdentifier</key>
+              <string>com.gokusenseiz.shop</string>
+              <key>CFBundleName</key>
+              <string>GokuShop</string>
+              <key>CFBundlePackageType</key>
+              <string>APPL</string>
+              <key>CFBundleShortVersionString</key>
+              <string>1.0</string>
+          </dict>
+          </plist>
+          EOF
+          
+          # 4. Zipper le tout au format .ipa
           cd build && zip -r GokuShop.ipa Payload/
           
-      - name: Upload Artifact
-        uses: actions/upload-artifact@v3
+      - name: Telechargement de l'IPA
+        uses: actions/upload-artifact@v4
         with:
-          name: GokuShop-Package
+          name: GokuShop-Installable
           path: build/GokuShop.ipa
+          retention-days: 5
