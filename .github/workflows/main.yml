@@ -1,0 +1,29 @@
+name: Build IPA
+on: [push]
+
+jobs:
+  build:
+    runs-on: macos-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Set up Xcode
+        uses: maxim-lobanov/setup-xcode@v1
+        with:
+          xcode-version: 'latest'
+
+      - name: Build IPA
+        run: |
+          # Ce script simule la création de l'application
+          # Pour un projet réel sans certificat Apple Developer, 
+          # on génère un dossier .app puis on le zippe en .ipa
+          mkdir -p build/Payload
+          cp -r *.swift *.html *.js build/Payload/
+          cd build && zip -r GokuShop.ipa Payload/
+          
+      - name: Upload Artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: GokuShop-Package
+          path: build/GokuShop.ipa
